@@ -7,9 +7,12 @@ import aioconsole as aioconsole
 from aiohttp import web
 from aiohttp.abc import Request
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 ## WEB HANDLER ##
+from twitch import TwitchHelix
+
 
 def readAll(path):
     file = open(path, mode='r', encoding='utf-8')
@@ -19,7 +22,6 @@ def readAll(path):
 
 
 resultList = ""
-
 
 async def run_server(runner):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -65,16 +67,39 @@ class WebHandler:
 
 donateDict = {}
 driver: webdriver.Chrome = None
+twitch:TwitchHelix = None
+twitchCache = {}
 
+def newDonate(name, id='', type='1'):
+    dName = name
+    if type == '1' and twitch is not None:
+        try:
+            if id in twitchCache:
+                dName = twitchCache[id]
+            else:
+                user = twitch.get_users(login_names=id)[0]
+                if 'display_name' in user:
+                    dName = user['display_name']
+                else:
+                    dName = user['name']
+                twitchCache[id] = dName
+        except:
+            print(f"(정보 가져오기 실패) ", end='')
 
-def newDonate(name, id=''):
-    if id not in donateDict:
-        print(f"새 도네이션 감지: {name}({id})")
-        donateDict[id] = name
+    if dName == name:
+        print(f"도네이션 감지: {name}[{id}] ", end='')
     else:
-        if donateDict[id] != name:
-            print(f"이름 변경 감지: {donateDict[id]} -> {name}({id}) 업데이트")
-            donateDict[id] = name
+        print(f"도네이션 감지: {name}[{dName}|{id}] ", end='')
+
+    if id not in donateDict:
+        print(f"→ 새 도네이션")
+        donateDict[id] = dName
+    else:
+        if donateDict[id] != dName:
+            print(f"→ 이름 변경 감지: {donateDict[id]} -> {dName} 업데이트")
+            donateDict[id] = dName
+        else:
+            print("→ 필요한 작업 없음")
 
 
 def hookDonate(taID):
@@ -82,14 +107,17 @@ def hookDonate(taID):
     dc['goog:loggingPrefs'] = {'browser': 'ALL'}
     global driver
 
-    driver = webdriver.Chrome(desired_capabilities=dc)
+    chrome_options = Options()
+    chrome_options.add_argument('--log-level=3')
+    chrome_options.headless = True
+    driver = webdriver.Chrome(desired_capabilities=dc, options=chrome_options)
     driver.get(f'https://toon.at/widget/alertbox/{taID}/101')
     driver.implicitly_wait(30)
 
     driver.execute_script('''var origLog = console.log;
         console.log = function(obj) {
             try {
-                origLog("Roll-wnwfA1hj: " + obj["content"]["account"] + "_3943_" + obj["content"]["name"])
+                origLog("Roll-wnwfA1hj: " + obj["content"]["account"] + "_3943_" + obj["content"]["name"] + "_3943_" + obj["content"]["acctype"])
             } catch {
 
             }
@@ -105,7 +133,8 @@ async def readDonate():
                 data = msg[msg.index('Roll-wnwfA1hj: '):len(msg) - 1].replace('Roll-wnwfA1hj: ', '').split('_3943_')
                 id = data[0]
                 name = data[1]
-                newDonate(name, id)
+                type = data[2]
+                newDonate(name, id, type)
         await asyncio.sleep(1)
 
 
@@ -132,7 +161,7 @@ async def checkConsole():
 ## START POINT ##
 
 if __name__ == '__main__':
-    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템')
+    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템 Revision 2')
     print('투네이션이 디버깅용으로 출력하는 정보를 사용해 후원자 목록을 기록합니다')
     print('이후 투네이션 시스템이 바뀌는경우 정상동작 하지 않을 수 있습니다!')
     # print('혹시라도 ChromeDriver의 버젼이 맞지 않는경우 https://sites.google.com/chromium.org/driver/ 에서')
@@ -141,6 +170,12 @@ if __name__ == '__main__':
     if not os.path.exists('taID.txt'):
         print('taID.txt 에 투네이션 알림박스의 UUID를 입력해주세요')
         sys.exit(1)
+
+    if not os.path.exists('token.key'):
+        print('트위치 토큰이(token.key) 없습니다. 닉네임 확인기능이 비활성화됩니다')
+        print('https://twitchapps.com/tokengen/ 에서 4l2zx4rx2i4ql3b3itljatzymk5gnh 를 클라이언트 아이디로 해서 토큰을 만들 수 있습니다.')
+    else:
+        twitch = TwitchHelix(client_id='4l2zx4rx2i4ql3b3itljatzymk5gnh', oauth_token=readAll('token.key'))
 
     with open('taID.txt', 'r', encoding='utf8') as taIDFile:
         taID = taIDFile.read().strip()
@@ -151,7 +186,7 @@ if __name__ == '__main__':
 
     hookDonate(taID)
 
-    print('이제 link.txt 에 있는 링크를 브라우저 소스에 추가할 수 있습니다 ^ㅅ^')
+    print('이제 link.txt 에 있는 링크를 브라우저 소스에 추가할 수 있습니다')
     print("roong 이라고 치면 오버레이에 결과를 출력할 수 있습니다, exit 이라고 치면 종료할 수 있습니다")
 
     handler = WebHandler()
