@@ -7,11 +7,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet"> 
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <!-- Styles -->	
 <style>
 html, body {
 	height: 100%;
+}
+
+.error-icon {
+	width: 100%;
+	text-align: center;
+	font-size: 30em;
+}
+
+.error-text {
+	width: 100%;
+	text-align: center;
+	font-size: 3em;
+	display: inline-block;
 }
 
 .example3 {
@@ -26,7 +40,6 @@ html, body {
  -webkit-text-stroke: 1px white;
  color: black;
  width: 100%;
- min-height: 100%;
  height: auto%;
  margin: 0;
  text-align: center;
@@ -35,8 +48,6 @@ html, body {
 </style>
 <script type="text/javascript">
 //일단 빵바룽보 적어둬야지
-var xhr = new XMLHttpRequest();
-
 function startRolling(text) {
 	var build = "✿<br>투네이션 후원<br><br>" + text;
 	var rolling = document.getElementById('rolling');
@@ -54,20 +65,32 @@ function startRolling(text) {
 	})
 }
 
-xhr.onreadystatechange = function() {
-    if (xhr.readyState === xhr.DONE) {
-		if(xhr.responseText != 0) {
-			startRolling(xhr.responseText);
-		}
-	}
-}
-
-setInterval(function() {
-	xhr.open('GET', 'result');
-	xhr.send();
-}, 1000);
-
 window.onload = function() {
+	setInterval(function() {
+		var xhr = new XMLHttpRequest();
+		
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === xhr.DONE) {
+				if(xhr.responseText === '') {
+					console.log("null");
+					document.getElementById('error').style.display = 'block';
+				} else if(xhr.responseText === 'empty') {
+					console.log("empty");
+					document.getElementById('error').style.display = 'none';
+				} else if(xhr.responseText.match(/\<br\>/g) != null) {
+					console.log("resposnse");
+					startRolling(xhr.responseText);
+					document.getElementById('error').style.display = 'none';
+				} else {
+					console.log("other?");
+					document.getElementById('error').style.display = 'block';
+				}
+			}
+		}
+	
+		xhr.open('GET', 'http://127.0.0.1:4343/result', true);
+		xhr.send();
+	}, 1000);
 	//스크롤 속도 테스트가 필요할때 //를 때면 바로 표시
 	//startRolling("카요코<br>세리카<br>아야네<br>하루나<br>하루카<br>파란전기<br>빵룽<br>이오리<br>노노미<br>시로코<br>호시노<br>히나<br>치나츠<br>무츠키");
 }
@@ -75,6 +98,10 @@ window.onload = function() {
 </head>
 
 <body>
+<div id="error">
+<span class="error-icon material-icons">report</span><br>
+<span class="error-text"><b>프로그램이 켜져있지 않은것 같습니다<br>확인해주세요!</b></span>
+</div>
 <div class="example3">
 <span id="rolling">
 </span>

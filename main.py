@@ -21,7 +21,7 @@ def readAll(path):
     return all_of_it
 
 
-resultList = ""
+resultList = "empty"
 
 async def run_server(runner):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,9 +38,11 @@ async def mainHtml(request: Request):
 async def result(request: Request):
     global resultList
     transfer = resultList
-    resultList = ""
+    resultList = "empty"
+    headers = {'Access-Control-Allow-Origin': '*'}
     return web.Response(status=200,
                         body=transfer,
+                        headers=headers,
                         content_type="text/plain")
 
 
