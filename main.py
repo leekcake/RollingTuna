@@ -28,7 +28,7 @@ async def run_server(runner):
 
     sock.bind(('127.0.0.1', 4343))
 
-    await web._run_app(runner, sock=sock)
+    await web._run_app(runner, sock=sock, print=False)
 
 
 async def mainHtml(request: Request):
@@ -113,17 +113,25 @@ def hookDonate(taID):
     chrome_options.add_argument('--log-level=3')
     chrome_options.headless = True
     driver = webdriver.Chrome(desired_capabilities=dc, options=chrome_options)
+    reloadPage()
+
+def reloadPage():
+    global driver
     driver.get(f'https://toon.at/widget/alertbox/{taID}/101')
     driver.implicitly_wait(30)
-
     driver.execute_script('''var origLog = console.log;
-        console.log = function(obj) {
-            try {
-                origLog("Roll-wnwfA1hj: " + obj["content"]["account"] + "_3943_" + obj["content"]["name"] + "_3943_" + obj["content"]["acctype"])
-            } catch {
-
-            }
-        }''')
+            console.log = function(obj) {
+                try {
+                    origLog("Roll-wnwfA1hj: " + obj["content"]["account"] + "_3943_" + obj["content"]["name"] + "_3943_" + obj["content"]["acctype"])
+                } catch {
+                    if(obj.startsWith('ws: closed')) {
+                        origLog('Roll-wsClosed');
+                    }
+                    if(obj.startsWith('ws: opened')) {
+                        origLog(obj);
+                    }
+                }
+            }''')
 
 
 async def readDonate():
@@ -137,10 +145,20 @@ async def readDonate():
                 name = data[1]
                 type = data[2]
                 newDonate(name, id, type)
+            elif 'Roll-wsClosed' in msg:
+                print('투네이션 알림창과의 연결이 끊긴것으로 보입니다, 새로고치는중...')
+                reloadPage()
+            elif 'ws: opened' in msg:
+                print('투네이션 알림창과 연결된걸로 보입니다.')
         await asyncio.sleep(1)
 
 
 ## CONSOLE HANDLER ##
+
+infoMessage = "명령어 목록:\n" \
+              "\troong: 오버레이에 결과를 출력\n" \
+              "\treload: 투네이션 알림창을 새로고침 \n" \
+              "\texit: 프로그램 종료하기"
 
 async def checkConsole():
     stdin, stdout = await aioconsole.get_standard_streams()
@@ -156,14 +174,16 @@ async def checkConsole():
             global driver
             driver.quit()
             sys.exit(0)
+        elif text.lower() == "reload":
+            reloadPage()
+            print('새로고침 명령을 내렸습니다.')
         else:
-            print("roong 이라고 치면 오버레이에 결과를 출력할 수 있습니다, exit 이라고 치면 종료할 수 있습니다")
-
+            print(infoMessage)
 
 ## START POINT ##
 
 if __name__ == '__main__':
-    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템 Revision 2')
+    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템 Revision 3')
     print('투네이션이 디버깅용으로 출력하는 정보를 사용해 후원자 목록을 기록합니다')
     print('이후 투네이션 시스템이 바뀌는경우 정상동작 하지 않을 수 있습니다!')
     # print('혹시라도 ChromeDriver의 버젼이 맞지 않는경우 https://sites.google.com/chromium.org/driver/ 에서')
@@ -187,9 +207,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     hookDonate(taID)
-
-    print('이제 link.txt 에 있는 링크를 브라우저 소스에 추가할 수 있습니다')
-    print("roong 이라고 치면 오버레이에 결과를 출력할 수 있습니다, exit 이라고 치면 종료할 수 있습니다")
+    print(infoMessage)
 
     handler = WebHandler()
     loop = asyncio.new_event_loop()
