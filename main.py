@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import socket
 import sys
@@ -8,7 +9,9 @@ from aiohttp import web
 from aiohttp.abc import Request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from webdriver_manager.chrome import ChromeDriverManager
 
 ## WEB HANDLER ##
 from twitch import TwitchHelix
@@ -85,7 +88,8 @@ def newDonate(name, id='', type='1'):
                 else:
                     dName = user['name']
                 twitchCache[id] = dName
-        except:
+        except Exception as e:
+            print(e)
             print(f"(정보 가져오기 실패) ", end='')
 
     if dName == name:
@@ -112,7 +116,7 @@ def hookDonate(taID):
     chrome_options = Options()
     chrome_options.add_argument('--log-level=3')
     chrome_options.headless = True
-    driver = webdriver.Chrome(desired_capabilities=dc, options=chrome_options)
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager(log_level=logging.ERROR).install()), desired_capabilities=dc, options=chrome_options)
     reloadPage()
 
 def reloadPage():
@@ -166,9 +170,12 @@ async def checkConsole():
         text = line.decode('utf8').strip()
         if text.lower() == "roong":
             items = donateDict.items()
+            if len(items) == 0:
+                print("출력할 수 있는 도네이터 목록이 없습니다")
+                continue
             data = {value for _, value in items}
             # print("<br>".join(data))
-            registerResult("<br>".join(data))
+            registerResult("<br>" + "<br>".join(data))
             print("지금까지의 결과를 등록했습니다.")
         elif text.lower() == "exit":
             global driver
@@ -216,6 +223,24 @@ if __name__ == '__main__':
     checkCoro = loop.create_task(readDonate())
     handlerCoro = loop.create_task(handler.executeUntilEnd())
     consoleCoro = loop.create_task(checkConsole())
+
+    """
+    newDonate('테스트1', 'test1', '2')
+    newDonate('테스트2', 'test2', '2')
+    newDonate('테스트3', 'test3', '2')
+    newDonate('테스트4', 'test4', '2')
+    newDonate('테스트5', 'test5', '2')
+    newDonate('테스트6', 'test6', '2')
+    newDonate('테스트7', 'test7', '2')
+    newDonate('테스트8', 'test8', '2')
+    newDonate('테스트9', 'test9', '2')
+    newDonate('테스트10', 'test10', '2')
+    newDonate('테스트11', 'test11', '2')
+    newDonate('테스트12', 'test12', '2')
+    newDonate('테스트13', 'test13', '2')
+    newDonate('테스트14', 'test14', '2')
+    newDonate('테스트15', 'test15', '2')
+    """
 
     loop.run_until_complete(asyncio.gather(checkCoro, handlerCoro, consoleCoro))
 

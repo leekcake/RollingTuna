@@ -44,21 +44,24 @@ html, body {
  margin: 0;
  text-align: center;
  transform:translateY(100%);
+ min-height: 1080px;
 }
 </style>
 <script type="text/javascript">
 //일단 빵바룽보 적어둬야지
 function startRolling(text) {
-	var build = "✿<br>투네이션 후원<br><br>" + text;
+	var build = "✿<br>투네이션 후원<br>" + text;
 	var rolling = document.getElementById('rolling');
 	rolling.innerHTML = build
 	
-	//스크롤 속도 조절, 개행 하나(후원자 한명당) 2초씩 추가됨
-	var runTime = (build.match(/\<br\>/g) || []).length * 2000;
+	var runTime = (build.match(/\<br\>/g) || []).length * 1243;
+	if(runTime < 17000) {
+		runTime = 17000;
+	}
 	console.log("Duration: " + runTime);
 	
 	rolling.animate([
-		{ transform: 'translateY(100%)' },
+		{ transform: 'translateY(' + document.body.clientHeight + 'px)' },
 		{ transform: 'translateY(-100%)' }
 	], {
 		duration: runTime
@@ -92,6 +95,7 @@ window.onload = function() {
 		xhr.send();
 	}, 1000);
 	//스크롤 속도 테스트가 필요할때 //를 때면 바로 표시
+	//startRolling("카요코<br>세리카");
 	//startRolling("카요코<br>세리카<br>아야네<br>하루나<br>하루카<br>파란전기<br>빵룽<br>이오리<br>노노미<br>시로코<br>호시노<br>히나<br>치나츠<br>무츠키");
 }
 </script>
