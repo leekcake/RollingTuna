@@ -48,15 +48,22 @@ html, body {
 }
 </style>
 <script type="text/javascript">
+function getRandomIntInclusive(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; //최댓값도 포함, 최솟값도 포함
+}
+
 //일단 빵바룽보 적어둬야지
 function startRolling(text) {
 	var build = "✿<br>투네이션 후원<br>" + text;
 	var rolling = document.getElementById('rolling');
 	rolling.innerHTML = build
 	
-	var runTime = (build.match(/\<br\>/g) || []).length * 1243;
-	if(runTime < 17000) {
-		runTime = 17000;
+	var minTime = getRandomIntInclusive(14000, 19000);
+	var runTime = (build.match(/\<br\>/g) || []).length * getRandomIntInclusive(643, 1443);
+	if(runTime < minTime) {
+		runTime = minTime;
 	}
 	console.log("Duration: " + runTime);
 	
