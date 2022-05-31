@@ -9,8 +9,8 @@ from aiohttp import web
 from aiohttp.abc import Request
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 ## WEB HANDLER ##
@@ -126,13 +126,21 @@ def reloadPage():
     driver.execute_script('''var origLog = console.log;
             console.log = function(obj) {
                 try {
+                    //Sub Gift
+                    if(obj["code"] == 115 || obj["code"] == 114) {
+                        return;
+                    }
                     origLog("Roll-wnwfA1hj: " + obj["content"]["account"] + "_3943_" + obj["content"]["name"] + "_3943_" + obj["content"]["acctype"])
                 } catch {
-                    if(obj.startsWith('ws: closed')) {
-                        origLog('Roll-wsClosed');
-                    }
-                    if(obj.startsWith('ws: opened')) {
-                        origLog(obj);
+                    try {
+                        origLog("Roll-wnwfA1hj: " + obj["info"]["extra_quest_account"] + "_3943_" + obj["info"]["extra_quest_name"] + "_3943_43")
+                    } catch {
+                        if(obj.startsWith('ws: closed')) {
+                            origLog('Roll-wsClosed');
+                        }
+                        if(obj.startsWith('ws: opened')) {
+                            origLog(obj);
+                        }
                     }
                 }
             }''')
@@ -190,7 +198,7 @@ async def checkConsole():
 ## START POINT ##
 
 if __name__ == '__main__':
-    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템 Revision 3')
+    print('롤링 참치 - 투네이션 후원자 목록 박제 시스템 Revision 5')
     print('투네이션이 디버깅용으로 출력하는 정보를 사용해 후원자 목록을 기록합니다')
     print('이후 투네이션 시스템이 바뀌는경우 정상동작 하지 않을 수 있습니다!')
     # print('혹시라도 ChromeDriver의 버젼이 맞지 않는경우 https://sites.google.com/chromium.org/driver/ 에서')
